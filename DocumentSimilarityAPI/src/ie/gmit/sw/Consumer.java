@@ -1,64 +1,83 @@
+//A Consumer class which contains methods on 
+
 package ie.gmit.sw;
 
-import java.awt.List;
+import java.util.List;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-public class Consumer implements Runnable {
+public class Consumer implements Runnable{
+
 	private BlockingQueue<Shingle> queue;
 	private int k;
-	private int[] minhashes; // The random stuff
-	private Map<Integer> , List map = new HashMap();
-	private ExecutorService pool;
-
-	public Consumer(BlockingQueue<Shingle>q, int k, int poolSize) {
+	private int [] minhashes;
+	private Map <Integer,List<Integer>> map;	
+	
+	public Consumer(BlockingQueue<Shingle> q, Map <Integer,List<Integer>> map,int k,int[] minhashes) {
+		super();
 		this.queue = q;
 		this.k = k;
-		pool = Executors.newFixedThreadPool(poolSize);
-		init();
-	}
-
-	private void init() {
+		this.map = map;
+		this.minhashes = minhashes;
+	}//constructor
+	
+	//An init method which creates a random integer to fill the minhash array
+	public void init(){
 		Random random = new Random();
-		minhashes = new int[k]; // k = 200 - 300
-		for(int i = 0; i < minhashes.length; i++) {
-			minhashes[i] = random.nextInt(0);
-		}
-	}
+		minhashes = new int[k];
+		
+		for(int i=0; i < minhashes.length; i++){
+			minhashes[i] = random.nextInt();
+		}//for
+	}//init
+	
+	//A run method which populates the array list with the number of hashes 
 	public void run() {
-		int docCount = 2; // FIX THIS
-		while(docCount > 0) {
-			Shingle s = queue.take(); // Blocking method
-			if(s.equals(Poison)){
-				docCount--;
-			}
-			else {
-				pool.execute(new Runnable(){
-					for(int i = 0; i < minhashes.length; i++) {
-						int value = s.getHashCode()^minhashes[i]; // ^ - xor(Random generated key)
-						List<Integer> list = map.get(s.getDocId());
-						if(list == null) {					// Happens once for each document
-							list = new ArrayList<Integer>(k); // k - size   //
-							for (int j =0; j < list.length; j++) {		//
-								list.set(j > Integer.MAX_VALUE);	//
-							}						//
-							map.pool(s.getDocId(), list0);			//
-						}
-						else {
-							if(list.get(i) > value) {
-								list.set(i, value);
-							}	
-						}
-					}// For
-				}// Execute
-			}// Else
-		// While
-	// Run
-	}	
-}// Consumer
+		int docCount = 1;
+		int max = Integer.MAX_VALUE;
+		int value = 0;
+		
+		while(docCount>0) {
+			
+			try {		
+				Shingle s = queue.take();
+				
+				if(s.getHashcode()==0) {
+					docCount--;
+					continue;
+				}//if
 
+				List<Integer> list = map.get(s.getDocId());
+				
+				if(list == null) {
+					list = new ArrayList<Integer>(k);
+					
+					for(int i = 0; i <k;i++) {
+						list.add(i, max);
+					}//for
+					
+					map.put(s.getDocId(), list);	
+				}//if
+
+				
+				for(int i = 0;i<minhashes.length;i++) {
+					
+					value =s.getHashcode() ^ minhashes[i];
+									
+					if(list.get(i) > value) {
+						list.set(i, value);
+					}//if
+				}//for
+					
+			}//try
+			
+			 catch (InterruptedException e) {
+				 
+				e.printStackTrace();
+			}
+			
+		}//while
+	}//run
+}//Consumer

@@ -1,3 +1,6 @@
+//A DocumentParser class which parses the files for comparison.
+//Author: Danielis Joniskis
+
 package ie.gmit.sw;
 
 import java.io.BufferedReader;
@@ -9,95 +12,92 @@ import java.util.Deque;
 import java.util.LinkedList;
 import java.util.concurrent.BlockingQueue;
 
-public class DocumentParser implements Runnable{
-	private BlockingQueue<Shingle>queue;
+public class DocumentParser implements Runnable {
+	
+	private BlockingQueue <Shingle> queue;
 	private String file;
-	private int shignleSize, k;
-	private Deque<String> buffer = new LinkedList<>();
+	private int shingleSize,k;
+	private Deque<String>buffer=new LinkedList<>();
 	private int docId;	
 
-	public DocumentParser(String file, BlockingQueue<Shingle>q, int shingleSize, int k) {
+	public DocumentParser(String file,BlockingQueue<Shingle>q, int shingleSize, int k) {
 		this.queue = q;
+		this.file = file;
+		this.shingleSize = shingleSize;
+		this.k = k;
 	}
-	
+
 	public void run() {
 		BufferedReader br = null;
 		try {
-			br = new BufferedReader(new InputStreamReader(new FileInputStream(file))
-);
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		String line = null;
-		try {
-			while((line = br.readLine())!= null) {
-				String uLine = line.toUpperCase();
-				String[] words = uLine.split(" "); // Can also take a regexpression
+			//Reading in the file
+			br = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+			String line = null;
+			//Reading through every line
+			while((line = br.readLine())!=null){
+				String uLine= line.toUpperCase();
+				//Splitting the lines into words where a space is present
+				String [] words = uLine.split(" ");
+				//Adding words to buffer to create the shingle and then add the shingles to the queue
 				addWordsToBuffer(words);
 				Shingle s = getNextShingle();
-				queue.put(s); // Blocking method. Add is not a blocking method
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		try {
-			flushBuffer();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		try {
-			br.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}// Run
-
-
-	private void addWordsToBuffer(String [] words) {
-		for(String s : words) {
-			buffer.add(s);
-		}
-  
-        }
-
-  	private Shingle getNextShingle() {
-		StringBuffer sb = new StringBuffer();
-		int counter = 0;
-		int shingleSize = 3;
-		while(counter < shingleSize ) {
-			if(buffer.peek() != null) {
-				sb.append(buffer.poll());
-				counter++;
-			}
-		}  
-		if (sb.length() > 0) {
-			return(new Shingle(docId, sb.toString().hashCode()));
-		}
-		else {
-			return(null);
-		}
-  	} // Next shingle
-	
-
-	private void flushBuffer() throws InterruptedException {
-		while(buffer.size() > 0) {
-			Shingle s = new Shingle();
-			s = getNextShingle();
-			if(s != null) {
+				if(s == null) {
+					continue;
+				}
 				queue.put(s);
 			}
-			else {
-				queue.put(new Poison(docId, 0));
-			}
+			
+			// write End of File shingle - used by Consumer class
+			queue.put(new Shingle(0,0));
+			
+			flushBuffer();
+			br.close();
+		} catch (FileNotFoundException e) {
+			
+			e.printStackTrace();
+		} catch (IOException e) {
+			
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			
+			e.printStackTrace();
+		}	
+	}
+	
+	//A simple method which adds words to the string buffer
+	private void addWordsToBuffer(String[] words) {
+		for(String s: words) {
+			buffer.add(s);
 		}
 	}
 
-        
-  }// Document Parser
+	//A method which gets the next shingle
+	private Shingle getNextShingle() {
+		StringBuilder sb = new StringBuilder();
+		int counter = 0;
+		while(counter < shingleSize) {
+			if(buffer.peek()!=null) 
+				sb.append(buffer.poll());
+			counter++;
+		}
+		if(sb.length()>0) {
+			int docId=0;
+			return (new Shingle(docId,sb.toString().hashCode()));
+		}
+		else {
+			return null;
+		}
+	}
+	
+	//A method which flushes all remaining bytes
+	private void flushBuffer() throws InterruptedException {
+		while(buffer.size()>0) {
+			Shingle s =getNextShingle();
+			if(s != null) {
+				queue.put(s);	
+			}else {
+				queue.put(new Poison(0,0));
+			}
+		}
+	}
+}
