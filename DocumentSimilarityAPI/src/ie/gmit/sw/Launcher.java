@@ -63,6 +63,7 @@ public class Launcher {
 		System.out.println("Files A and B have a similarity of : "+similarity+"%");		
 	}
 	
+	//The intersection of the two sets is the subset containing shared elements
 	float Jaccard(List<Integer> a,List<Integer> b) {
 		
 		float similarity = 0.0f;

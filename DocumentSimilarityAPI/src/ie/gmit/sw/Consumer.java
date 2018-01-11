@@ -1,4 +1,5 @@
-//A Consumer class which contains methods on 
+//A Consumer class which contains methods on populating the array with number of hashes
+//Author: Danielis Joniskis
 
 package ie.gmit.sw;
 
@@ -40,8 +41,8 @@ public class Consumer implements Runnable{
 		int value = 0;
 		
 		while(docCount>0) {
-			
-			try {		
+			try {
+				//Retrieving the head of the queue with take
 				Shingle s = queue.take();
 				
 				if(s.getHashcode()==0) {
@@ -49,18 +50,18 @@ public class Consumer implements Runnable{
 					continue;
 				}//if
 
+				//Returning the value to which the key is mapped
 				List<Integer> list = map.get(s.getDocId());
 				
 				if(list == null) {
 					list = new ArrayList<Integer>(k);
-					
 					for(int i = 0; i <k;i++) {
 						list.add(i, max);
 					}//for
 					
+					//value of list associated with key shingle doc id
 					map.put(s.getDocId(), list);	
 				}//if
-
 				
 				for(int i = 0;i<minhashes.length;i++) {
 					
@@ -69,8 +70,7 @@ public class Consumer implements Runnable{
 					if(list.get(i) > value) {
 						list.set(i, value);
 					}//if
-				}//for
-					
+				}//for		
 			}//try
 			
 			 catch (InterruptedException e) {

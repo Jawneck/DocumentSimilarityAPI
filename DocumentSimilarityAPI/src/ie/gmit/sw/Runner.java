@@ -6,6 +6,7 @@ package ie.gmit.sw;
 public class Runner {
 
 	public static void main(String[] args) throws Exception {
+		//Simply showing the UserInterface in the main method
 		new UserInterface().show();
     }
 }

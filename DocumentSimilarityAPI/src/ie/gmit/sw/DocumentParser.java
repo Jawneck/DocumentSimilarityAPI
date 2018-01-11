@@ -27,6 +27,7 @@ public class DocumentParser implements Runnable {
 		this.k = k;
 	}
 
+	//A run method which opens the buffered reader and adds shingles to the queue
 	public void run() {
 		BufferedReader br = null;
 		try {
@@ -47,7 +48,6 @@ public class DocumentParser implements Runnable {
 				queue.put(s);
 			}
 			
-			// write End of File shingle - used by Consumer class
 			queue.put(new Shingle(0,0));
 			
 			flushBuffer();
